@@ -162,6 +162,9 @@ dmypy.json
 .pytype/
 
 # dataset directory
+datasets/
+data/
+files/
 */datasets/
 */data/
 */files/
