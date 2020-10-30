@@ -3,8 +3,8 @@ import math
 import json
 import librosa
 
-DATASET_PATH = "datasets/genre"
-JSON_PATH = "data_10.json"
+DATASET_PATH = "datasets/genres"
+JSON_PATH = "datasets/processed/data_10.json"
 SAMPLE_RATE = 22050
 TRACK_DURATION = 30  # seconds
 SAMPLES_PER_TRACK = SAMPLE_RATE * TRACK_DURATION
@@ -63,3 +63,6 @@ def save_mfcc(
 
     with open(json_path, "w") as fp:
         json.dump(data, fp, indent=4)
+
+if __name__ == "__main__":
+    save_mfcc(DATASET_PATH, JSON_PATH, num_segments=10)
