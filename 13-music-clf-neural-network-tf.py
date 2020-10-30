@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 import tensorflow.keras as keras
 
-DATA_PATH = "path"
+DATA_PATH = "datasets/processed/data_10.json"
 
 
 def load_data(data_path):
