@@ -4,7 +4,6 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim
 from torch.utils.data import Dataset, DataLoader
 
@@ -23,8 +22,6 @@ def load_data(data_path):
 
     X = np.array(data["mfcc"])
     y = np.array(data["labels"])
-
-    print("Data successfully loaded!")
 
     return X, y
 
@@ -47,29 +44,32 @@ class Network(nn.Module):
 
     def __init__(self):
         super().__init__()
-        self.fc1 = nn.Linear(in_features=1690, out_features=512)
-        self.fc2 = nn.Linear(in_features=512, out_features=256)
-        self.fc3 = nn.Linear(in_features=256, out_features=64)
-        self.fc4 = nn.Linear(in_features=64, out_features=10)
-        self.relu = nn.ReLU()
-        self.softmax = nn.Softmax()
 
+        self.layers = nn.Sequential(
+            nn.Linear(in_features=1690, out_features=512),
+            nn.ReLU(),
+            nn.Linear(in_features=512, out_features=256),
+            nn.ReLU(),
+            nn.Linear(in_features=256, out_features=64),
+            nn.ReLU(),
+            nn.Linear(in_features=64, out_features=10),
+            nn.Softmax(dim=-1)  # 소프트맥스는 (bs, hs)에서 hs에만 적용. 각 샘플 별로 소프트맥스 적용
+        )
 
     def forward(self, x):
-        x = x.view(-1, 1690)
+        x = x.view(x.size(0), -1)
+        out = self.layers(x)
+        return out
 
-        x = self.fc1(x)
-        x = self.relu(x)
 
-        x = self.fc2(x)
-        x = self.relu(x)
+def multi_acc(y_pred, y_test):
+    _, y_pred_tags = torch.max(y_pred, dim=1)
 
-        x = self.fc3(x)
-        x = self.relu(x)
+    correct_pred = (y_pred_tags == y_test).float()
+    acc = correct_pred.sum() / len(correct_pred)
+    acc = torch.round(acc)
 
-        x = self.fc4(x)
-        x = self.softmax(x)
-        return x
+    return acc
 
 if __name__ == "__main__":
     X, y = load_data(DATA_PATH)
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=True)
 
     num_epochs = 50
-    learning_rate = 0.001
+    learning_rate = 0.0001
 
     model = Network()
     criterion = nn.CrossEntropyLoss()
@@ -90,36 +90,51 @@ if __name__ == "__main__":
 
     for epoch in range(num_epochs):
 
+        train_acc = 0
+        train_loss = 0
+
         ### To-do
         ### fix error on train_dataloader
+        model.train()
         for idx, data in enumerate(train_dataloader):
             inputs = data[0]
             targets = data[1]
 
             outputs = model(inputs)
-            loss = criterion(outputs, targets)
+            loss = criterion(outputs, targets.squeeze())
+            acc = multi_acc(outputs, targets)
+
+            train_loss += float(loss.item())
+            train_acc += float(acc.item())
 
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
 
         if (epoch + 1) % 5 == 0:
-            print("Epoch [{}/{}], Loss: {:.4f}".format(epoch + 1,
-                                                       num_epochs,
-                                                       loss.item()))
+            print("\nEpoch [{}/{}], Acc: {:.4f}, Loss: {:.4f}".format(epoch + 1,
+                                                                      num_epochs,
+                                                                      train_acc / len(train_dataloader),
+                                                                      train_loss / len(train_dataloader)))
 
-    with torch.no_grad():
+            model.eval()
+            with torch.no_grad():
 
-        total_loss = 0
-        for idx, eval_batch in enumerate(test_dataloader):
-            eval_data = eval_batch[0]
-            eval_label = eval_batch[1]
+                total_loss = 0
+                total_acc = 0
+                for idx, eval_batch in enumerate(test_dataloader):
+                    eval_data = eval_batch[0]
+                    eval_label = eval_batch[1]
 
-            pred = model(eval_data)
-            loss = criterion(pred, eval_label)
+                    pred = model(eval_data)
+                    loss = criterion(pred, eval_label.squeeze())
+                    acc = multi_acc(pred, eval_label)
 
-            total_loss += loss
+                    total_loss += float(loss)
+                    total_acc += float(acc)
 
-        avg_loss = total_loss / (idx + 1)
+                avg_loss = total_loss / len(test_dataloader)
+                avg_acc = total_acc / len(test_dataloader)
 
-        print('\nEvaluation loss: {}'.format(avg_loss))
+                print('Evaluation loss: {}'.format(avg_loss))
+                print('Evaluation acc: {}'.format(avg_acc))
