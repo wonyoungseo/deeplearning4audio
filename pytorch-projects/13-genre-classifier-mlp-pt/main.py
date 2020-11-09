@@ -2,11 +2,12 @@ import argparse
 from trainer import Trainer
 from data_loader import setup_dataloader
 
+datapath = "../../datasets"
 
 def define_argparser():
     p = argparse.ArgumentParser()
 
-    p.add_argument("--data_path", type=str, default="../datasets/processed/data_10.json")
+    p.add_argument("--data_path", type=str, default="../../datasets/processed/data_10.json")
     p.add_argument("--test_ratio", type=float, default=0.3)
     p.add_argument("--batch_size", type=float, default=32)
     p.add_argument("--num_epochs", type=int, default=50)
