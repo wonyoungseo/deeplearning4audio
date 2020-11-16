@@ -1,16 +1,11 @@
 import json
-from random import random
 import numpy as np
 from sklearn.model_selection import train_test_split
 import torch
 import torch.nn as nn
 import torch.optim
 from torch.utils.data import Dataset, DataLoader
-
-#### Todos
-# 1. Improve model to match performance with TF counterpart module.
-# 2. Modify in a more Pythonic, Pytorch style.
-
+import matplotlib.pyplot as plt
 
 DATA_PATH = "datasets/processed/data_10.json"
 
@@ -71,6 +66,28 @@ def multi_acc(y_pred, y_test):
 
     return acc
 
+
+def plot_history(history):
+
+    fig, axs = plt.subplots(2)
+
+    axs[0].plot(history["train_acc"], label="train accuracy")
+    axs[0].plot(history["eval_acc"], label="test accuracy")
+    axs[0].set_ylabel("Accuracy")
+    axs[0].set_xlabel("Epoch")
+    axs[0].legend(loc="lower right")
+    axs[0].set_title("Accuracy eval")
+
+    axs[1].plot(history["train_loss"], label="train error")
+    axs[1].plot(history["eval_loss"], label="test error")
+    axs[1].set_ylabel("Error")
+    axs[1].set_xlabel("Epoch")
+    axs[1].legend(loc="upper right")
+    axs[1].set_title("Error eval")
+
+    plt.show()
+
+
 if __name__ == "__main__":
     X, y = load_data(DATA_PATH)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
@@ -88,13 +105,16 @@ if __name__ == "__main__":
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
+    ls_avg_train_acc = []
+    ls_avg_train_loss = []
+    ls_avg_eval_acc = []
+    ls_avg_eval_loss = []
+
     for epoch in range(num_epochs):
 
         train_acc = 0
         train_loss = 0
 
-        ### To-do
-        ### fix error on train_dataloader
         model.train()
         for idx, data in enumerate(train_dataloader):
             inputs = data[0]
@@ -111,30 +131,47 @@ if __name__ == "__main__":
             loss.backward()
             optimizer.step()
 
+        avg_train_acc = train_acc / len(train_dataloader)
+        avg_train_loss = train_loss / len(train_dataloader)
+        ls_avg_train_acc.append(avg_train_acc)
+        ls_avg_train_loss.append(avg_train_loss)
+
+
+
+        model.eval()
+        with torch.no_grad():
+
+            total_loss = 0
+            total_acc = 0
+            for idx, eval_batch in enumerate(test_dataloader):
+                eval_data = eval_batch[0]
+                eval_label = eval_batch[1]
+
+                pred = model(eval_data)
+                loss = criterion(pred, eval_label.squeeze())
+                acc = multi_acc(pred, eval_label)
+
+                total_loss += float(loss)
+                total_acc += float(acc)
+
+
+            avg_eval_acc = total_acc / len(test_dataloader)
+            avg_eval_loss = total_loss / len(test_dataloader)
+            ls_avg_eval_acc.append(avg_eval_acc)
+            ls_avg_eval_loss.append(avg_eval_loss)
+
         if (epoch + 1) % 5 == 0:
             print("\nEpoch [{}/{}], Acc: {:.4f}, Loss: {:.4f}".format(epoch + 1,
                                                                       num_epochs,
-                                                                      train_acc / len(train_dataloader),
-                                                                      train_loss / len(train_dataloader)))
+                                                                      avg_train_acc,
+                                                                      avg_train_loss))
 
-            model.eval()
-            with torch.no_grad():
+            print('Evaluation loss: {}'.format(avg_eval_loss))
+            print('Evaluation acc: {}'.format(avg_eval_acc))
 
-                total_loss = 0
-                total_acc = 0
-                for idx, eval_batch in enumerate(test_dataloader):
-                    eval_data = eval_batch[0]
-                    eval_label = eval_batch[1]
+    history = {"train_acc" : ls_avg_train_acc,
+            "train_loss" : ls_avg_train_loss,
+            "eval_acc" : ls_avg_eval_acc,
+            "eval_loss" : ls_avg_eval_loss}
 
-                    pred = model(eval_data)
-                    loss = criterion(pred, eval_label.squeeze())
-                    acc = multi_acc(pred, eval_label)
-
-                    total_loss += float(loss)
-                    total_acc += float(acc)
-
-                avg_loss = total_loss / len(test_dataloader)
-                avg_acc = total_acc / len(test_dataloader)
-
-                print('Evaluation loss: {}'.format(avg_loss))
-                print('Evaluation acc: {}'.format(avg_acc))
+    plot_history(history)
