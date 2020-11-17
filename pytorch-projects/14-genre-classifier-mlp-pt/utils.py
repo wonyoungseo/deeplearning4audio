@@ -1,12 +1,4 @@
-
 import torch
-
-
-
-
-
-
-
 
 
 def multi_acc(y_pred, y_test):

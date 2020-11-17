@@ -16,9 +16,11 @@ class Trainer:
                  eval_dataloader):
 
         self.config = config
-        self.model = Network()
+        self.model = Network(self.config.dropout_rate)
 
-        self.optimizer = optim.Adam(self.model.parameters(), lr=config.learning_rate)
+        self.optimizer = optim.Adam(self.model.parameters(),
+                                    lr=config.learning_rate,
+                                    weight_decay=config.weight_decay)
         self.criterion = nn.CrossEntropyLoss()
         self.train_dataloader = train_dataloader
         self.eval_dataloader = eval_dataloader

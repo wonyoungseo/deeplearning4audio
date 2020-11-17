@@ -5,8 +5,6 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 
 
-
-
 def read_data(data_path):
 
     with open(data_path, "r") as fp:
@@ -14,7 +12,6 @@ def read_data(data_path):
     X = np.array(data["mfcc"])
     y = np.array(data["labels"])
     return X, y
-
 
 
 class SampleDataset(Dataset):
