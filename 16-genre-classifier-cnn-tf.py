@@ -7,6 +7,15 @@ import matplotlib.pyplot as plt
 DATA_PATH = "datasets/processed/data_10.json"
 
 
+import json
+import numpy as np
+from sklearn.model_selection import train_test_split
+import tensorflow.keras as keras
+import matplotlib.pyplot as plt
+
+DATA_PATH = "datasets/processed/data_10.json"
+
+
 def load_data(data_path):
 
     with open(data_path, "r") as fp:
@@ -30,12 +39,13 @@ def prepare_dataset(test_size, validation_size):
     # create train/validation split
     X_train, X_validation, y_train, y_validation = train_test_split(X_train, y_train, test_size=validation_size)
 
-    # image data requires 3 dimensional array -> (height, width, channels) -> (timebean, MFCCs, 1 channel) -> (130, 13, 1)
+    # image data requires 3 dimensional array -> (rows, cols, channels) -> (timebean, MFCCs, 1 channel) -> (130, 13, 1)
     # array[..., new axis]
     X_train = X_train[..., np.newaxis] # 4d array -> (batch_size-num_samples, 130, 13, 1)
     X_validation = X_validation[..., np.newaxis]
     X_test = X_test[..., np.newaxis]
 
+    # return shape -> (nums, height, width, channels)
     return X_train, X_validation, X_test, y_train, y_validation, y_test
 
 
@@ -50,12 +60,12 @@ def build_model(input_shape):
     model.add(keras.layers.BatchNormalization())
 
     ## 2st Conv layer
-    model.add(keras.layers.Conv2D(filters=32, kernel_size=(3, 3), activation='relu', input_shape=input_shape))
+    model.add(keras.layers.Conv2D(filters=32, kernel_size=(3, 3), activation='relu'))
     model.add(keras.layers.MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same'))
     model.add(keras.layers.BatchNormalization())
 
     ## 3st Conv layer
-    model.add(keras.layers.Conv2D(filters=32, kernel_size=(2, 2), activation='relu', input_shape=input_shape))
+    model.add(keras.layers.Conv2D(filters=32, kernel_size=(2, 2), activation='relu'))
     model.add(keras.layers.MaxPool2D(pool_size=(2, 2), strides=(2, 2), padding='same'))
     model.add(keras.layers.BatchNormalization())
 
