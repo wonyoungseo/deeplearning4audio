@@ -18,7 +18,6 @@ class Network(nn.Module):
             nn.ReLU(),
             nn.Dropout(dropout_rate),
             nn.Linear(in_features=64, out_features=10),
-            nn.Softmax(dim=-1)  # 각 샘플 별로 softmax 적용
         )
 
     def forward(self, x):

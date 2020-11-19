@@ -48,7 +48,10 @@ class Network(nn.Module):
             nn.Linear(in_features=256, out_features=64),
             nn.ReLU(),
             nn.Linear(in_features=64, out_features=10),
-            nn.Softmax(dim=-1)  # 소프트맥스는 (bs, hs)에서 hs에만 적용. 각 샘플 별로 소프트맥스 적용
+            # nn.Softmax(dim=-1)
+            # softmax is applied only on the data, not on batch thus dim=-1)
+            # softmax is already included in nn.CrossEntropy, thus it should be taken out from here
+
         )
 
     def forward(self, x):

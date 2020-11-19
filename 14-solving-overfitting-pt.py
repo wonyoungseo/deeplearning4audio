@@ -51,7 +51,9 @@ class Network(nn.Module):
             nn.ReLU(),
             nn.Dropout(0.3),
             nn.Linear(in_features=64, out_features=10),
-            nn.Softmax(dim=-1)  # 소프트맥스는 (bs, hs)에서 hs에만 적용. 각 샘플 별로 소프트맥스 적용
+            # nn.Softmax(dim=-1)
+            # softmax is applied only on the data, not on batch thus dim=-1)
+            # softmax is already included in nn.CrossEntropy, thus it should be taken out from here
         )
 
     def forward(self, x):
@@ -60,7 +62,7 @@ class Network(nn.Module):
         return out
 
 
-def multi_acc(y_pred, y_test):
+def multiclass_acc(y_pred, y_test):
     _, y_pred_tags = torch.max(y_pred, dim=1)
 
     correct_pred = (y_pred_tags == y_test).float()
@@ -116,8 +118,6 @@ if __name__ == "__main__":
         train_acc = 0
         train_loss = 0
 
-        ### To-do
-        ### fix error on train_dataloader
         model.train()
         for idx, data in enumerate(train_dataloader):
             inputs = data[0]
@@ -125,7 +125,7 @@ if __name__ == "__main__":
 
             outputs = model(inputs)
             loss = criterion(outputs, targets.squeeze())
-            acc = multi_acc(outputs, targets)
+            acc = multiclass_acc(outputs, targets)
 
             train_loss += float(loss.item())
             train_acc += float(acc.item())
@@ -150,7 +150,7 @@ if __name__ == "__main__":
 
                 pred = model(eval_data)
                 loss = criterion(pred, eval_label.squeeze())
-                acc = multi_acc(pred, eval_label)
+                acc = multiclass_acc(pred, eval_label)
 
                 total_loss += float(loss)
                 total_acc += float(acc)
