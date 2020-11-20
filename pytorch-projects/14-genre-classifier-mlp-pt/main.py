@@ -7,11 +7,11 @@ def define_argparser():
     p = argparse.ArgumentParser()
 
     p.add_argument("--data_path", type=str, default="../../datasets/processed/data_10.json")
-    p.add_argument("--test_ratio", type=float, default=0.3)
+    p.add_argument("--test_ratio", type=float, default=0.25)
     p.add_argument("--batch_size", type=float, default=32)
     p.add_argument("--num_epochs", type=int, default=50)
     p.add_argument("--learning_rate", type=float, default=0.0001)
-    p.add_argument("--dropout_rate", type=float, default=0.3)
+    p.add_argument("--dropout_rate", type=float, default=0.5)
     p.add_argument("--weight_decay", type=float, default=0.001)
 
     config = p.parse_args()
