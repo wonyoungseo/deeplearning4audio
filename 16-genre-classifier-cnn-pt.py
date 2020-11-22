@@ -155,7 +155,7 @@ if __name__ == "__main__":
     test_dataset = SampleDataset(X_test, y_test)
 
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    val_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=True)
 
     num_epochs = 30
