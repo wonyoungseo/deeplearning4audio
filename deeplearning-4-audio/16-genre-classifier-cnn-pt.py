@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 from torchsummary import summary
 
-DATA_PATH = "datasets/processed/data_10.json"
+DATA_PATH = "../datasets/processed/data_10.json"
 
 
 def load_data(data_path):

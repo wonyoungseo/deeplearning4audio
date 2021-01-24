@@ -7,7 +7,7 @@ import torch.optim
 from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 
-DATA_PATH = "datasets/processed/data_10.json"
+DATA_PATH = "../datasets/processed/data_10.json"
 
 
 def load_data(data_path):
@@ -43,17 +43,15 @@ class Network(nn.Module):
         self.layers = nn.Sequential(
             nn.Linear(in_features=1690, out_features=512),
             nn.ReLU(),
-            nn.Dropout(0.3),
             nn.Linear(in_features=512, out_features=256),
             nn.ReLU(),
-            nn.Dropout(0.3),
             nn.Linear(in_features=256, out_features=64),
             nn.ReLU(),
-            nn.Dropout(0.3),
             nn.Linear(in_features=64, out_features=10),
             # nn.Softmax(dim=-1)
             # softmax is applied only on the data, not on batch thus dim=-1)
             # softmax is already included in nn.CrossEntropy, thus it should be taken out from here
+
         )
 
     def forward(self, x):
@@ -62,13 +60,15 @@ class Network(nn.Module):
         return out
 
 
-def multiclass_acc(y_pred, y_test):
+def multi_acc(y_pred, y_test):
     _, y_pred_tags = torch.max(y_pred, dim=1)
 
     correct_pred = (y_pred_tags == y_test).float()
     acc = correct_pred.sum() / len(correct_pred)
+    acc = torch.round(acc)
 
     return acc
+
 
 def plot_history(history):
 
@@ -90,6 +90,7 @@ def plot_history(history):
 
     plt.show()
 
+
 if __name__ == "__main__":
     X, y = load_data(DATA_PATH)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
@@ -100,12 +101,12 @@ if __name__ == "__main__":
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=True)
 
-    num_epochs = 100
+    num_epochs = 50
     learning_rate = 0.0001
 
     model = Network()
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=0.001) #L2 regularization
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     ls_avg_train_acc = []
     ls_avg_train_loss = []
@@ -124,7 +125,7 @@ if __name__ == "__main__":
 
             outputs = model(inputs)
             loss = criterion(outputs, targets.squeeze())
-            acc = multiclass_acc(outputs, targets)
+            acc = multi_acc(outputs, targets)
 
             train_loss += float(loss.item())
             train_acc += float(acc.item())
@@ -138,6 +139,8 @@ if __name__ == "__main__":
         ls_avg_train_acc.append(avg_train_acc)
         ls_avg_train_loss.append(avg_train_loss)
 
+
+
         model.eval()
         with torch.no_grad():
 
@@ -149,7 +152,7 @@ if __name__ == "__main__":
 
                 pred = model(eval_data)
                 loss = criterion(pred, eval_label.squeeze())
-                acc = multiclass_acc(pred, eval_label)
+                acc = multi_acc(pred, eval_label)
 
                 total_loss += float(loss)
                 total_acc += float(acc)
